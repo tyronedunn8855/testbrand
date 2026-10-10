@@ -2,14 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>/* Motion: full by default. The footer button turns it off (saved per browser) and adds html.rm. */(function(d){var rm=false;try{rm=localStorage.getItem('lucent-motion')==='off'}catch(e){}window.__rm=rm;if(rm)d.classList.add('rm')})(document.documentElement)</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>lucent — Drop 01</title>
 <meta name="description" content="lucent Drop 01. The zip set in nine colorways. Every garment is a statement.">
 <meta name="theme-color" content="#0A0C0F">
-<link rel="canonical" href="https://lucent.com/">
+<link rel="canonical" href="https://testbrand-ten.vercel.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="lucent">
-<meta property="og:url" content="https://lucent.com/">
+<meta property="og:url" content="https://testbrand-ten.vercel.app/">
+<meta property="og:image" content="https://testbrand-ten.vercel.app/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lucent Drop 01: Every garment is a statement, with the zip set">
+<meta name="twitter:card" content="summary_large_image">
 <meta property="og:title" content="lucent — Drop 01">
 <meta property="og:description" content="The zip set in nine colorways. Every garment is a statement.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314161A'/%3E%3Cpath d='M16 4l3 8 9 .5-7 5.5 2.5 8.5L16 21l-7.5 5.5L11 18l-7-5.5L13 12z' fill='%23F2F0EC'/%3E%3C/svg%3E">
@@ -47,10 +53,10 @@ p{margin:0 0 1em}
 section{padding:clamp(52px,7vw,104px) 0;position:relative;z-index:2}
 .eyebrow{font-family:var(--f-d);font-size:.74rem;letter-spacing:.26em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:12px}
 .lede{color:var(--fg-dim);max-width:54ch;font-size:clamp(.96rem,1.7vw,1.1rem)}
-@media (prefers-reduced-motion:reduce){
-  .hero-shot img,.lock-bg,.mq-in,.petal,.rain,.mote,.fly,.gull,.spin svg,.sdiv svg,.lyr,.lock-top .star{animation:none!important}
-  .fx{display:none!important}
-  .lyr{transform:none!important}
+@media all {
+  html.rm .hero-shot img, html.rm .lock-bg, html.rm .mq-in, html.rm .petal, html.rm .rain, html.rm .mote, html.rm .fly, html.rm .gull, html.rm .spin svg, html.rm .sdiv svg, html.rm .lyr, html.rm .lock-top .star {animation:none!important}
+  html.rm .fx {display:none!important}
+  html.rm .lyr {transform:none!important}
 }
 
 /* ============ BUTTONS ============ */
@@ -618,6 +624,8 @@ body.lightmode img,body.lightmode .scenes,body.lightmode .lock{filter:invert(1) 
 .fitbar{height:4px;background:var(--line);position:relative;margin:10px 0 6px;border-radius:2px}
 .fitbar i{position:absolute;top:-4px;width:2px;height:12px;background:var(--accent)}
 .fitlabels{display:flex;justify-content:space-between;font-size:.66rem;color:var(--fg-dim);letter-spacing:.1em;text-transform:uppercase}
+/* Motion toggle (footer): full motion by default, visitors can turn it off */
+.motion-toggle{background:none;border:0;padding:0;margin-left:12px;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px}
 </style>
 </head>
 <body data-scene="concrete" class="locked">
@@ -912,7 +920,7 @@ body.lightmode img,body.lightmode .scenes,body.lightmode .lock{filter:invert(1) 
       <div><h4>BRAND</h4><a href="#/about">About</a><a href="#/lookbook">Lookbook</a></div>
       <div><h4>HELP</h4><a href="#/info">Sizing</a><a href="#/info">Shipping</a><a href="#/info">Returns</a><a href="#/info">Care</a></div>
     </div>
-    <div class="foot-b"><span>&copy; <span id="yr"></span> lucent</span><span id="footDomain"></span></div>
+    <div class="foot-b"><span>&copy; <span id="yr"></span> lucent</span> <button type="button" class="motion-toggle" aria-pressed="false">Turn motion off</button><span id="footDomain"></span></div>
   </div>
 </footer>
 
@@ -971,7 +979,6 @@ const PHOTO = {"yellow": "data:image/webp;base64,UklGRmg8AABXRUJQVlA4WAoAAAAQAAA
 /* ============ CONFIG ============ */
 const CONFIG={
   domain:"lucent.com",
-  sitePassword:"password",
   launchDate:"2026-09-20T00:00:00",   // pre-orders open
   preorderShip:"mid-November 2026",
   foundingLimit:50,
@@ -988,7 +995,7 @@ const CONFIG={
   instagramPosts:[],                 // [{img,url}] from your own feed export
   notifyEndpoint:"",                 // POST target for restock + waitlist + referral, else it opens email
   orderEndpoint:"",                  // POST target for order lookup
-  adminPass:"lucentadmin"
+  unlockEndpoint:"/api/unlock"       // checks the site and admin passwords on the server (api/unlock.js)
 };
 
 /* ============ COLORWAYS ============ */
@@ -1240,7 +1247,9 @@ let query="";
 function paintShop(){
   let list=VISIBLE();
   if(query){const q=query.toLowerCase(); list=VISIBLE().filter(c=>(c.n+" "+c.id+" zip set").toLowerCase().includes(q));}
-  document.getElementById('shopCrumb').innerHTML=`<a href="#/">Home</a><span>/</span>Shop`+(query?`<span>/</span>"${query}"`:``);
+  // query comes from the URL (#/shop?q=...), so it is escaped before it goes into the page
+  const safeQ=String(query).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  document.getElementById('shopCrumb').innerHTML=`<a href="#/">Home</a><span>/</span>Shop`+(query?`<span>/</span>"${safeQ}"`:``);
   document.getElementById('shopTitle').textContent=query?`"${query}"`:"The Zip Set";
   const sb=document.getElementById('shopBlurb');
   if(sb) sb.textContent = LIVE()
@@ -1787,9 +1796,13 @@ function initInfo(){
 /* ============ ADMIN ============ */
 function initAdmin(){
   const go=document.getElementById('adGo'); if(!go) return;
-  go.onclick=()=>{
-    if(document.getElementById('adPw').value!==CONFIG.adminPass){
-      document.getElementById('adMsg').textContent="Wrong password."; return; }
+  go.onclick=async()=>{
+    const msg=document.getElementById('adMsg');
+    const r=await checkPassword('admin',document.getElementById('adPw').value);
+    if(r!=='ok'){
+      msg.textContent = r==='off' ? "Admin is not set up yet. Add LUCENT_ADMIN_PASSWORD in Vercel."
+        : r==='busy' ? "Too many tries. Wait a minute." : r==='down' ? "Could not reach the server. Try again." : "Wrong password.";
+      return; }
     document.getElementById('adminGate').style.display='none';
     const b=document.getElementById('adminBody'); b.style.display='block';
     const top=Object.entries(STATS.swatch).sort((a,c)=>c[1]-a[1]).slice(0,5);
@@ -1896,10 +1909,21 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeCart(); closeModal();
 
 /* ============ UNLOCK ============ */
 const lockEl=document.getElementById('lock'), curtain=document.getElementById('curtain');
-document.getElementById('lockForm').addEventListener('submit',e=>{
-  e.preventDefault();
-  const v=document.getElementById('lockPw').value.trim();
-  if(v.toLowerCase()===CONFIG.sitePassword.toLowerCase()){
+// Passwords are checked by api/unlock.js, never stored in this page.
+// Resolves 'ok', 'no' (wrong), 'off' (not set up on the server), 'busy' (rate limited) or 'down' (no server).
+async function checkPassword(kind,password){
+  try{
+    const r=await fetch(CONFIG.unlockEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,password})});
+    if(r.ok) return 'ok';
+    if(r.status===401) return 'no';
+    if(r.status===503) return 'off';
+    if(r.status===429) return 'busy';
+    return 'down';
+  }catch(err){ return 'down'; }
+}
+function openGate(fast){
+  if(!lockEl.isConnected) return;
+  if(fast){ lockEl.remove(); curtain.remove(); document.body.classList.remove('locked'); return; }
     lockEl.style.transition="opacity .45s ease"; lockEl.style.opacity="0";
     curtain.querySelectorAll('i').forEach((el,i)=>el.style.transitionDelay=(i*0.09)+"s");
     setTimeout(()=>{
@@ -1909,8 +1933,16 @@ document.getElementById('lockForm').addEventListener('submit',e=>{
       document.body.classList.add('revealing');
       setTimeout(()=>{ document.body.classList.remove('revealing'); curtain.remove(); },1500);
     },420);
-  }else{
-    document.getElementById('lockErr').textContent="Incorrect password.";
+}
+// The gate shows only when LUCENT_SITE_PASSWORD is set in Vercel. Otherwise the store opens right away.
+fetch(CONFIG.unlockEndpoint+'?kind=site').then(r=>r.ok?r.json():{required:false}).catch(()=>({required:false}))
+  .then(d=>{ if(!d.required) openGate(true); });
+document.getElementById('lockForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const r=await checkPassword('site',document.getElementById('lockPw').value.trim());
+  if(r==='ok'||r==='off'){ openGate(false); }
+  else{
+    document.getElementById('lockErr').textContent = r==='busy' ? "Too many tries. Wait a minute." : r==='down' ? "Could not reach the server. Try again." : "Incorrect password.";
     lockEl.classList.add('shake');
     setTimeout(()=>lockEl.classList.remove('shake'),450);
     document.getElementById('lockPw').select();
@@ -1920,5 +1952,6 @@ setTimeout(()=>{ const i=document.getElementById('lockPw'); if(i) i.focus(); },9
 
 route();
 </script>
+<script>(function(){var b=document.querySelector('.motion-toggle');if(!b)return;var off=!!window.__rm;b.textContent=off?'Turn motion on':'Turn motion off';b.setAttribute('aria-pressed',off?'true':'false');b.addEventListener('click',function(){try{localStorage.setItem('lucent-motion',off?'on':'off')}catch(e){}location.reload()})})();</script>
 </body>
 </html>
